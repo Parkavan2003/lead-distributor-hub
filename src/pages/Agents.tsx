@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
-import DashboardLayout from '../components/Layout/DashboardLayout';
+import ModernDashboardLayout from '../components/Layout/ModernDashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Mail, Phone, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Phone, Eye, EyeOff, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Agent {
@@ -135,13 +134,13 @@ const Agents = () => {
   };
 
   return (
-    <DashboardLayout activeTab="agents">
+    <ModernDashboardLayout activeTab="agents">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Agent Management</h2>
-            <p className="text-gray-600">Manage your sales agents and their performance</p>
+            <h2 className="text-3xl font-bold text-gray-900">Agent Management</h2>
+            <p className="text-muted-foreground mt-1">Manage your sales agents and their performance</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -149,32 +148,33 @@ const Agents = () => {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button className="btn-primary">
+              <Button className="bg-primary hover:bg-primary/90 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Agent
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-xl font-semibold">
                   {editingAgent ? 'Edit Agent' : 'Add New Agent'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
-                  <Label htmlFor="name">Full Name *</Label>
+                  <Label htmlFor="name" className="text-sm font-medium">Full Name *</Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Enter full name"
+                    className="mt-1"
                     required
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
                   <Input
                     id="email"
                     name="email"
@@ -182,27 +182,29 @@ const Agents = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Enter email address"
+                    className="mt-1"
                     required
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="mobile">Mobile Number *</Label>
+                  <Label htmlFor="mobile" className="text-sm font-medium">Mobile Number *</Label>
                   <Input
                     id="mobile"
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleInputChange}
                     placeholder="+1 (555) 123-4567"
+                    className="mt-1"
                     required
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="password">
+                  <Label htmlFor="password" className="text-sm font-medium">
                     Password {editingAgent ? '(leave blank to keep current)' : '*'}
                   </Label>
-                  <div className="relative">
+                  <div className="relative mt-1">
                     <Input
                       id="password"
                       name="password"
@@ -230,7 +232,7 @@ const Agents = () => {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" className="btn-primary">
+                  <Button type="submit" className="bg-primary hover:bg-primary/90">
                     {editingAgent ? 'Update Agent' : 'Create Agent'}
                   </Button>
                 </div>
@@ -241,114 +243,118 @@ const Agents = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6">
+          <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-blue-500 rounded-xl shadow-lg">
+                <UserCheck className="w-6 h-6 text-white" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Agents</p>
-                <p className="text-2xl font-bold text-gray-900">{agents.length}</p>
+                <p className="text-sm font-medium text-blue-700">Total Agents</p>
+                <p className="text-2xl font-bold text-blue-900">{agents.length}</p>
+                <p className="text-sm text-blue-600">+2 this month</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full">
-                <Mail className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-green-500 rounded-xl shadow-lg">
+                <Mail className="w-6 h-6 text-white" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Agents</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-green-700">Active Agents</p>
+                <p className="text-2xl font-bold text-green-900">
                   {agents.filter(a => a.status === 'active').length}
                 </p>
+                <p className="text-sm text-green-600">All active</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-6 bg-gradient-to-br from-purple-50 to-violet-100 border-purple-200">
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Phone className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-purple-500 rounded-xl shadow-lg">
+                <Phone className="w-6 h-6 text-white" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Leads</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-purple-700">Total Leads</p>
+                <p className="text-2xl font-bold text-purple-900">
                   {agents.reduce((sum, agent) => sum + agent.leadsAssigned, 0)}
                 </p>
+                <p className="text-sm text-purple-600">Distributed</p>
               </div>
             </div>
           </Card>
         </div>
 
         {/* Agents Table */}
-        <Card className="overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <Card className="overflow-hidden shadow-lg">
+          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <h3 className="text-lg font-semibold text-gray-900">All Agents</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Agent
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Performance
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {agents.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-gray-50">
+                {agents.map((agent, index) => (
+                  <tr key={agent.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-600">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                          <span className="text-sm font-bold text-white">
                             {agent.name.split(' ').map(n => n[0]).join('')}
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{agent.name}</div>
+                          <div className="text-sm font-semibold text-gray-900">{agent.name}</div>
                           <div className="text-sm text-gray-500">Joined {agent.createdAt}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{agent.email}</div>
+                      <div className="text-sm text-gray-900 font-medium">{agent.email}</div>
                       <div className="text-sm text-gray-500">{agent.mobile}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{agent.leadsAssigned} leads assigned</div>
+                      <div className="text-sm font-semibold text-gray-900">{agent.leadsAssigned} leads assigned</div>
                       <div className="text-sm text-gray-500">
-                        {agent.leadsConverted} converted ({agent.leadsAssigned > 0 ? Math.round((agent.leadsConverted / agent.leadsAssigned) * 100) : 0}%)
+                        <span className="text-green-600 font-medium">{agent.leadsConverted} converted</span> ({agent.leadsAssigned > 0 ? Math.round((agent.leadsConverted / agent.leadsAssigned) * 100) : 0}%)
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                         agent.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800 border border-green-200' 
+                          : 'bg-red-100 text-red-800 border border-red-200'
                       }`}>
                         {agent.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(agent)}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -356,7 +362,7 @@ const Agents = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(agent.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 border-red-200 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -369,7 +375,7 @@ const Agents = () => {
           </div>
         </Card>
       </div>
-    </DashboardLayout>
+    </ModernDashboardLayout>
   );
 };
 

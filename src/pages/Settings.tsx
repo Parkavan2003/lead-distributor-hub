@@ -1,6 +1,5 @@
-
-import React from 'react';
-import DashboardLayout from '../components/Layout/DashboardLayout';
+import React, { useState } from 'react';
+import ModernDashboardLayout from '../components/Layout/ModernDashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,7 @@ import { Settings as SettingsIcon, User, Lock, Bell, Database } from 'lucide-rea
 
 const Settings = () => {
   return (
-    <DashboardLayout activeTab="settings">
+    <ModernDashboardLayout activeTab="settings">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -168,7 +167,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </ModernDashboardLayout>
   );
 };
 

@@ -1,404 +1,354 @@
 
-import React, { useState, useRef } from 'react';
-import DashboardLayout from '../components/Layout/DashboardLayout';
+import React, { useState, useCallback } from 'react';
+import ModernDashboardLayout from '../components/Layout/ModernDashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, CheckCircle, AlertCircle, Download, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Upload, FileText, Users, CheckCircle2, AlertCircle, Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface ParsedLead {
+interface LeadData {
   firstName: string;
   phone: string;
   notes: string;
 }
 
-interface DistributedLead extends ParsedLead {
-  assignedAgent: string;
+interface DistributedLead extends LeadData {
+  id: string;
+  agentId: string;
+  agentName: string;
+  uploadDate: string;
+}
+
+interface UploadHistory {
+  id: string;
+  filename: string;
+  uploadDate: string;
+  totalLeads: number;
+  status: 'completed' | 'processing' | 'error';
 }
 
 const UploadLeads = () => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [parsedLeads, setParsedLeads] = useState<ParsedLead[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [distributedLeads, setDistributedLeads] = useState<DistributedLead[]>([]);
-  const [step, setStep] = useState<'upload' | 'preview' | 'distributed'>('upload');
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>([
+    {
+      id: '1',
+      filename: 'leads_january_2024.csv',
+      uploadDate: '2024-01-15',
+      totalLeads: 250,
+      status: 'completed'
+    },
+    {
+      id: '2',
+      filename: 'prospects_december.xlsx',
+      uploadDate: '2024-01-14',
+      totalLeads: 180,
+      status: 'completed'
+    }
+  ]);
 
-  // Mock agents data
+  // Mock agents for distribution
   const agents = [
-    'John Smith',
-    'Sarah Johnson', 
-    'Mike Wilson',
-    'Lisa Brown',
-    'David Lee'
+    { id: '1', name: 'John Smith' },
+    { id: '2', name: 'Sarah Johnson' },
+    { id: '3', name: 'Mike Wilson' },
+    { id: '4', name: 'Lisa Brown' },
+    { id: '5', name: 'David Lee' }
   ];
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const handleFileSelect = (file: File) => {
-    const validTypes = ['.csv', '.xlsx', '.xls'];
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    
-    if (!validTypes.includes(fileExtension)) {
-      toast.error('Please upload only CSV, XLSX, or XLS files');
-      return;
-    }
-
-    setUploadedFile(file);
-    parseFile(file);
-  };
-
-  const parseFile = async (file: File) => {
-    setIsProcessing(true);
-    
-    try {
-      // Simulate file parsing - in real app, use csv-parser or xlsx package
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock parsed data
-      const mockLeads: ParsedLead[] = [
-        { firstName: 'Alice Cooper', phone: '+1-555-0101', notes: 'Interested in premium package' },
-        { firstName: 'Bob Johnson', phone: '+1-555-0102', notes: 'Follow up next week' },
-        { firstName: 'Carol Davis', phone: '+1-555-0103', notes: 'Budget constraint, offer discount' },
-        { firstName: 'David Wilson', phone: '+1-555-0104', notes: 'Decision maker, ready to buy' },
-        { firstName: 'Emma Brown', phone: '+1-555-0105', notes: 'Compare with competitors' },
-        { firstName: 'Frank Miller', phone: '+1-555-0106', notes: 'Technical questions pending' },
-        { firstName: 'Grace Lee', phone: '+1-555-0107', notes: 'Interested in trial version' },
-        { firstName: 'Henry Taylor', phone: '+1-555-0108', notes: 'Contact after Q1' },
-        { firstName: 'Ivy Anderson', phone: '+1-555-0109', notes: 'High potential lead' },
-        { firstName: 'Jack Thompson', phone: '+1-555-0110', notes: 'Needs approval from team' },
-        { firstName: 'Kate White', phone: '+1-555-0111', notes: 'Price sensitive customer' },
-        { firstName: 'Liam Garcia', phone: '+1-555-0112', notes: 'Looking for enterprise solution' },
-        { firstName: 'Maya Rodriguez', phone: '+1-555-0113', notes: 'Urgent requirement' },
-        { firstName: 'Noah Martinez', phone: '+1-555-0114', notes: 'Warm lead from referral' },
-        { firstName: 'Olivia Clark', phone: '+1-555-0115', notes: 'Schedule demo next month' }
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       ];
       
-      setParsedLeads(mockLeads);
-      setStep('preview');
-      toast.success(`Successfully parsed ${mockLeads.length} leads from ${file.name}`);
-    } catch (error) {
-      console.error('Error parsing file:', error);
-      toast.error('Error parsing file. Please check the format.');
-    } finally {
-      setIsProcessing(false);
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload only CSV, XLS, or XLSX files');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error('File size must be less than 10MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      toast.success('File selected successfully');
     }
-  };
+  }, []);
 
-  const distributeLeads = () => {
-    if (parsedLeads.length === 0) return;
-
-    const leadsPerAgent = Math.floor(parsedLeads.length / agents.length);
-    const remainder = parsedLeads.length % agents.length;
-    
+  const distributeLeads = (leads: LeadData[]): DistributedLead[] => {
     const distributed: DistributedLead[] = [];
+    const leadsPerAgent = Math.floor(leads.length / agents.length);
+    const remainder = leads.length % agents.length;
+
     let currentIndex = 0;
 
     agents.forEach((agent, agentIndex) => {
-      const numberOfLeads = leadsPerAgent + (agentIndex < remainder ? 1 : 0);
+      const leadsForThisAgent = leadsPerAgent + (agentIndex < remainder ? 1 : 0);
       
-      for (let i = 0; i < numberOfLeads; i++) {
-        if (currentIndex < parsedLeads.length) {
+      for (let i = 0; i < leadsForThisAgent; i++) {
+        const lead = leads[currentIndex];
+        if (lead) {
           distributed.push({
-            ...parsedLeads[currentIndex],
-            assignedAgent: agent
+            ...lead,
+            id: `lead_${currentIndex}_${Date.now()}`,
+            agentId: agent.id,
+            agentName: agent.name,
+            uploadDate: new Date().toISOString().split('T')[0]
           });
-          currentIndex++;
         }
+        currentIndex++;
       }
     });
 
-    setDistributedLeads(distributed);
-    setStep('distributed');
-    toast.success(`Successfully distributed ${distributed.length} leads among ${agents.length} agents`);
+    return distributed;
   };
 
-  const downloadSample = () => {
-    const csvContent = `FirstName,Phone,Notes
-John Doe,+1-555-0001,Interested in our services
-Jane Smith,+1-555-0002,Follow up required
-Mike Johnson,+1-555-0003,High priority lead`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sample_leads.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file first');
+      return;
+    }
 
-  const resetUpload = () => {
-    setUploadedFile(null);
-    setParsedLeads([]);
-    setDistributedLeads([]);
-    setStep('upload');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (agents.length === 0) {
+      toast.error('No agents available for distribution');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Simulate file processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Mock CSV parsing - in real app, use csv-parser or xlsx
+      const mockLeads: LeadData[] = Array.from({ length: 25 }, (_, i) => ({
+        firstName: `Lead ${i + 1}`,
+        phone: `+1555${String(i + 1).padStart(4, '0')}`,
+        notes: `Notes for lead ${i + 1}`
+      }));
+
+      // Distribute leads among agents
+      const distributed = distributeLeads(mockLeads);
+      setDistributedLeads(prev => [...prev, ...distributed]);
+
+      // Add to upload history
+      const newUpload: UploadHistory = {
+        id: Date.now().toString(),
+        filename: selectedFile.name,
+        uploadDate: new Date().toISOString().split('T')[0],
+        totalLeads: mockLeads.length,
+        status: 'completed'
+      };
+      setUploadHistory(prev => [newUpload, ...prev]);
+
+      toast.success(`Successfully uploaded and distributed ${mockLeads.length} leads to ${agents.length} agents`);
+      setSelectedFile(null);
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
+    } catch (error) {
+      toast.error('Failed to upload file. Please try again.');
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const getAgentDistribution = () => {
-    const distribution: { [key: string]: number } = {};
-    distributedLeads.forEach(lead => {
-      distribution[lead.assignedAgent] = (distribution[lead.assignedAgent] || 0) + 1;
-    });
-    return distribution;
+  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      setSelectedFile(file);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  }, []);
+
+  const getAgentLeadCount = (agentId: string) => {
+    return distributedLeads.filter(lead => lead.agentId === agentId).length;
   };
 
   return (
-    <DashboardLayout activeTab="upload">
-      <div className="space-y-6">
+    <ModernDashboardLayout activeTab="upload">
+      <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Upload & Distribute Leads</h2>
-            <p className="text-gray-600">Upload CSV/Excel files and distribute leads to agents</p>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Button variant="outline" onClick={downloadSample}>
-              <Download className="w-4 h-4 mr-2" />
-              Download Sample
-            </Button>
-            {step !== 'upload' && (
-              <Button variant="outline" onClick={resetUpload}>
-                Upload New File
-              </Button>
-            )}
-          </div>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Upload & Distribute Leads</h1>
+          <p className="text-lg text-gray-600">Upload CSV/Excel files and automatically distribute leads to agents</p>
         </div>
 
-        {/* Upload Step */}
-        {step === 'upload' && (
-          <Card className="p-8">
+        {/* Upload Section */}
+        <Card className="p-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Upload Lead File</h2>
+            
+            {/* Drag & Drop Area */}
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                isDragging
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-300 hover:border-primary hover:bg-primary/5'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
+              className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300 cursor-pointer"
               onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => document.getElementById('file-upload')?.click()}
             >
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <Upload className="w-8 h-8 text-primary" />
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+                <Upload className="w-8 h-8 text-white" />
+              </div>
+              
+              {selectedFile ? (
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold text-gray-900">{selectedFile.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(selectedFile.size / 1024).toFixed(1)} KB • Ready to upload
+                  </p>
+                  <div className="flex items-center justify-center space-x-2 mt-4">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-green-600">File selected</span>
+                  </div>
                 </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {isProcessing ? 'Processing file...' : 'Upload your leads file'}
-                  </h3>
-                  <p className="text-gray-600 mt-1">
-                    Drag and drop your CSV, XLSX, or XLS file here, or click to browse
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold text-gray-700">
+                    Drop your CSV/Excel file here or click to browse
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Supports: .csv, .xlsx, .xls (Max 10MB)
                   </p>
                 </div>
+              )}
+              
+              <Input
+                id="file-upload"
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
 
-                {isProcessing ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                    <span className="text-sm text-gray-600">Parsing leads...</span>
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="btn-primary"
-                  >
-                    Choose File
-                  </Button>
-                )}
-                
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleFileInput}
-                  className="hidden"
-                />
+            {/* File Requirements */}
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-amber-800">File Requirements</h4>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Your file should contain columns: <strong>FirstName</strong>, <strong>Phone</strong>, and <strong>Notes</strong>
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">File Format Requirements:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Column 1: FirstName (text)</li>
-                <li>• Column 2: Phone (number with country code)</li>
-                <li>• Column 3: Notes (text)</li>
-                <li>• Supported formats: CSV, XLSX, XLS</li>
-              </ul>
+            {/* Upload Button */}
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || uploading}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload & Distribute
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Distribution Overview */}
+        {distributedLeads.length > 0 && (
+          <Card className="p-6 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Distribution Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {agents.map((agent) => {
+                const leadCount = getAgentLeadCount(agent.id);
+                return (
+                  <div key={agent.id} className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-xl border border-blue-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">{agent.name}</p>
+                        <p className="text-lg font-bold text-blue-600">{leadCount} leads</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
         )}
 
-        {/* Preview Step */}
-        {step === 'preview' && (
-          <div className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">File Parsed Successfully</h3>
-                    <p className="text-gray-600">Found {parsedLeads.length} leads in {uploadedFile?.name}</p>
-                  </div>
-                </div>
-                
-                <Button onClick={distributeLeads} className="btn-primary">
-                  <Users className="w-4 h-4 mr-2" />
-                  Distribute to {agents.length} Agents
-                </Button>
-              </div>
-            </Card>
-
-            <Card className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Preview Leads</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        #
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        First Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Phone
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Notes
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {parsedLeads.slice(0, 10).map((lead, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-900">{index + 1}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{lead.firstName}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{lead.phone}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{lead.notes}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {parsedLeads.length > 10 && (
-                <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600">
-                  Showing first 10 of {parsedLeads.length} leads
-                </div>
-              )}
-            </Card>
+        {/* Upload History */}
+        <Card className="overflow-hidden border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+            <h3 className="text-xl font-bold text-gray-900">Upload History</h3>
           </div>
-        )}
-
-        {/* Distributed Step */}
-        {step === 'distributed' && (
-          <div className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Leads Distributed Successfully</h3>
-                  <p className="text-gray-600">
-                    {distributedLeads.length} leads have been distributed among {agents.length} agents
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Distribution Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(getAgentDistribution()).map(([agent, count]) => (
-                <Card key={agent} className="p-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {agent.split(' ').map(n => n[0]).join('')}
-                      </span>
+          <div className="p-6">
+            <div className="space-y-4">
+              {uploadHistory.map((upload) => (
+                <div key={upload.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-full shadow-sm ${
+                      upload.status === 'completed' 
+                        ? 'bg-green-100 text-green-600' 
+                        : upload.status === 'error'
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-yellow-100 text-yellow-600'
+                    }`}>
+                      {upload.status === 'completed' ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : upload.status === 'error' ? (
+                        <AlertCircle className="w-5 h-5" />
+                      ) : (
+                        <FileText className="w-5 h-5" />
+                      )}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{agent}</p>
-                      <p className="text-sm text-gray-600">{count} leads assigned</p>
+                      <p className="font-semibold text-gray-900">{upload.filename}</p>
+                      <p className="text-sm text-gray-500">
+                        Uploaded on {upload.uploadDate} • {upload.totalLeads} leads
+                      </p>
                     </div>
                   </div>
-                </Card>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                      upload.status === 'completed'
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : upload.status === 'error'
+                        ? 'bg-red-100 text-red-800 border border-red-200'
+                        : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                    }`}>
+                      {upload.status}
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
-
-            {/* Detailed Distribution */}
-            <Card className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Distributed Leads</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Lead
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Phone
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Notes
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Assigned Agent
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {distributedLeads.map((lead, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{lead.firstName}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{lead.phone}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{lead.notes}</td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
-                            {lead.assignedAgent}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
           </div>
-        )}
+        </Card>
       </div>
-    </DashboardLayout>
+    </ModernDashboardLayout>
   );
 };
 
